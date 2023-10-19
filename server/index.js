@@ -79,16 +79,12 @@ const resolvers = {
 
   Mutation: {
     addBook: async (root, args) => {
-      let author = await Author.findOne({ name: args.name });
-
-      console.log(author);
+      let author = await Author.findOne({ name: args.author });
 
       if (!author) {
         author = new Author({ name: args.author });
         await author.save();
       }
-
-      console.log(author._id, author.name);
 
       try {
         const newBook = new Book({
@@ -97,7 +93,8 @@ const resolvers = {
           genres: args.genres,
           author: author._id,
         });
-        return newBook.save();
+        await newBook.save();
+        return Book.populate(newBook, 'author');
       } catch (error) {
         console.log(error);
 
@@ -110,6 +107,7 @@ const resolvers = {
         });
       }
     },
+
     addAuthor: async (root, args) => {
       const author = new Author({ ...args });
       return author.save();
