@@ -24,16 +24,14 @@ const AuthorForm = ({ authors }) => {
       <h2>Set birthyear</h2>
       <form onSubmit={submit}>
         <div>
-          <label htmlFor="name">name:</label>
+          <label htmlFor="name">Name:</label>
           <select
             name="name"
             id="id"
             value={name}
             onChange={({ target }) => setName(target.value)}
           >
-            <option defaultValue="" selected>
-              -----
-            </option>
+            <option defaultValue="">-----</option>
             {authors.map((a) => (
               <option key={a} value={a}>
                 {a}
@@ -42,7 +40,7 @@ const AuthorForm = ({ authors }) => {
           </select>
         </div>
         <div>
-          <label htmlFor="born">born:</label>
+          <label htmlFor="born">Born:</label>
           <input
             type="number"
             id="born"
@@ -51,7 +49,7 @@ const AuthorForm = ({ authors }) => {
             onChange={({ target }) => setBorn(target.value)}
           />
         </div>
-        <button type="submit">update author</button>
+        <button type="submit">Update author</button>
       </form>
     </div>
   );
