@@ -61,18 +61,22 @@ const resolvers = {
 
     allBooks: async (root, args) => {
       if (!args.author && !args.genere) {
-        return Book.find({});
+        return Book.find({}).populate('author');
       }
-      let authorBooks;
-      if (args.author && args.genre) {
-        authorBooks = books.filter((b) => b.author === args.author);
-        authorBooks = authorBooks.filter((b) => b.genres.includes(args.genre));
-      } else if (args.author) {
-        authorBooks = books.filter((b) => b.author === args.author);
-      } else if (args.genre) {
-        authorBooks = books.filter((b) => b.genres.includes(args.genre));
+      if (args.author) {
+        const author = await Author.findOne({ name: args.author });
+        if (args.genre) {
+          return Book.find({
+            author: author._id,
+            genres: args.genre,
+          }).populate('author');
+        }
+        return Book.find({ author: author._id }).populate('author');
       }
-      return authorBooks;
+
+      return Book.find({
+        genres: args.genre,
+      }).populate('author');
     },
     allAuthors: async () => Author.find({}),
   },
