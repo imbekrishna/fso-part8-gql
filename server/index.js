@@ -18,7 +18,6 @@ const typeDefs = `
    type Author {
     name: String!
     born: Int
-    id:ID!
   }
 
   type Book {
@@ -26,7 +25,6 @@ const typeDefs = `
     published: Int!
     author: Author!
     genres: [String!]!
-    id:ID!
   }
 
   type Query{
@@ -82,12 +80,16 @@ const resolvers = {
   Mutation: {
     addBook: async (root, args) => {
       let author = await Author.findOne({ name: args.name });
+
+      console.log(author);
+
       if (!author) {
         author = new Author({ name: args.author });
         await author.save();
       }
 
-      console.log(author);
+      console.log(author._id, author.name);
+
       try {
         const newBook = new Book({
           title: args.title,
@@ -113,20 +115,23 @@ const resolvers = {
       return author.save();
     },
 
-    editAuthor: (root, args) => {
-      const author = authors.find((a) => a.name === args.name);
-      console.log(author, args);
-      if (!author) {
-        throw new GraphQLError('Author does not exists', {
+    editAuthor: async (root, args) => {
+      const author = await Author.findOne({ name: args.name });
+      author.born = args.setBornTo;
+
+      try {
+        await author.save();
+      } catch (error) {
+        throw new GraphQLError('Saving born failed', {
           extensions: {
-            code: 'AUTHOR_NOT_FOUND',
+            code: 'BAD_USER_INPUT',
             invalidArgs: args.name,
+            error,
           },
         });
       }
-      const updatedAuthor = { ...author, born: args.setBornTo };
-      authors = authors.map((a) => (a.name === args.name ? updatedAuthor : a));
-      return updatedAuthor;
+
+      return author;
     },
   },
 };
