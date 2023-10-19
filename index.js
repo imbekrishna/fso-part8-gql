@@ -1,5 +1,7 @@
 const { ApolloServer } = require("@apollo/server");
 const { startStandaloneServer } = require("@apollo/server/standalone");
+const uuid = require("uuid");
+const { GraphQLError } = require("graphql");
 
 let authors = [
   {
@@ -26,20 +28,6 @@ let authors = [
     id: "afa5b6f3-344d-11e9-a414-719c6709cf3e",
   },
 ];
-
-/*
- * Suomi:
- * Saattaisi olla järkevämpää assosioida kirja ja sen tekijä tallettamalla kirjan yhteyteen tekijän nimen sijaan tekijän id
- * Yksinkertaisuuden vuoksi tallennamme kuitenkin kirjan yhteyteen tekijän nimen
- *
- * English:
- * It might make more sense to associate a book with its author by storing the author's id in the context of the book instead of the author's name
- * However, for simplicity, we will store the author's name in connection with the book
- *
- * Spanish:
- * Podría tener más sentido asociar un libro con su autor almacenando la id del autor en el contexto del libro en lugar del nombre del autor
- * Sin embargo, por simplicidad, almacenaremos el nombre del autor en conección con el libro
- */
 
 let books = [
   {
@@ -119,6 +107,20 @@ const typeDefs = `
     allBooks(author:String, genre:String): [Book!]!
     allAuthors: [Author!]!
   }
+
+  type Mutation {
+    addBook(
+        title: String!
+        author: String!
+        published: Int!
+        genres: [String!]!
+    ):Book
+
+    editAuthor(
+        name:String!, 
+        setBornTo:Int!
+    ):Author
+  }
 `;
 
 const resolvers = {
@@ -126,6 +128,9 @@ const resolvers = {
     bookCount: () => books.length,
     authorCount: () => authors.length,
     allBooks: (root, args) => {
+      if (!args.author && !args.genere) {
+        return books;
+      }
       let authorBooks;
       if (args.author && args.genre) {
         authorBooks = books.filter((b) => b.author === args.author);
@@ -143,6 +148,34 @@ const resolvers = {
     bookCount: (root) => {
       const authorBooks = books.filter((b) => b.author === root.name);
       return authorBooks.length;
+    },
+  },
+
+  Mutation: {
+    addBook: (args) => {
+      const authorNames = authors.map((a) => a.name);
+      if (!authorNames.includes(args.author)) {
+        const newAuthor = { name: args.author, id: uuid.v1() };
+        authors = authors.concat(newAuthor);
+      }
+      const newBook = { ...args, id: uuid.v1() };
+      books = books.concat(newBook);
+      return newBook;
+    },
+    editAuthor: (args) => {
+      const author = authors.find((a) => a.name === args.name);
+      console.log(author, args);
+      if (!author) {
+        throw new GraphQLError('Author does not exists', {
+            extensions:{
+                code: 'AUTHOR_NOT_FOUND',
+                invalidArgs: args.name
+            }
+        })
+      }
+      const updatedAuthor = { ...author, born: args.setBornTo };
+      authors = authors.map((a) => (a.name === args.name ? updatedAuthor : a));
+      return updatedAuthor;
     },
   },
 };
