@@ -2,103 +2,31 @@ const { ApolloServer } = require('@apollo/server');
 const { startStandaloneServer } = require('@apollo/server/standalone');
 const uuid = require('uuid');
 const { GraphQLError } = require('graphql');
+const Book = require('./models/book');
+const Author = require('./models/author');
+const mongoose = require('mongoose');
+require('dotenv').config();
 
-let authors = [
-  {
-    name: 'Robert Martin',
-    id: 'afa51ab0-344d-11e9-a414-719c6709cf3e',
-    born: 1952,
-  },
-  {
-    name: 'Martin Fowler',
-    id: 'afa5b6f0-344d-11e9-a414-719c6709cf3e',
-    born: 1963,
-  },
-  {
-    name: 'Fyodor Dostoevsky',
-    id: 'afa5b6f1-344d-11e9-a414-719c6709cf3e',
-    born: 1821,
-  },
-  {
-    name: 'Joshua Kerievsky', // birthyear not known
-    id: 'afa5b6f2-344d-11e9-a414-719c6709cf3e',
-  },
-  {
-    name: 'Sandi Metz', // birthyear not known
-    id: 'afa5b6f3-344d-11e9-a414-719c6709cf3e',
-  },
-];
+mongoose.set('strictQuery', false);
 
-let books = [
-  {
-    title: 'Clean Code',
-    published: 2008,
-    author: 'Robert Martin',
-    id: 'afa5b6f4-344d-11e9-a414-719c6709cf3e',
-    genres: ['refactoring'],
-  },
-  {
-    title: 'Agile software development',
-    published: 2002,
-    author: 'Robert Martin',
-    id: 'afa5b6f5-344d-11e9-a414-719c6709cf3e',
-    genres: ['agile', 'patterns', 'design'],
-  },
-  {
-    title: 'Refactoring, edition 2',
-    published: 2018,
-    author: 'Martin Fowler',
-    id: 'afa5de00-344d-11e9-a414-719c6709cf3e',
-    genres: ['refactoring'],
-  },
-  {
-    title: 'Refactoring to patterns',
-    published: 2008,
-    author: 'Joshua Kerievsky',
-    id: 'afa5de01-344d-11e9-a414-719c6709cf3e',
-    genres: ['refactoring', 'patterns'],
-  },
-  {
-    title: 'Practical Object-Oriented Design, An Agile Primer Using Ruby',
-    published: 2012,
-    author: 'Sandi Metz',
-    id: 'afa5de02-344d-11e9-a414-719c6709cf3e',
-    genres: ['refactoring', 'design'],
-  },
-  {
-    title: 'Crime and punishment',
-    published: 1866,
-    author: 'Fyodor Dostoevsky',
-    id: 'afa5de03-344d-11e9-a414-719c6709cf3e',
-    genres: ['classic', 'crime'],
-  },
-  {
-    title: 'The Demon ',
-    published: 1872,
-    author: 'Fyodor Dostoevsky',
-    id: 'afa5de04-344d-11e9-a414-719c6709cf3e',
-    genres: ['classic', 'revolution'],
-  },
-];
-
-/*
-  you can remove the placeholder query once your first one has been implemented 
-*/
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log('connected to mongodb'))
+  .catch((error) => console.log('error connecting to mongodbb', error.message));
 
 const typeDefs = `
    type Author {
     name: String!
-    id: ID!
     born: Int
-    bookCount: Int!
+    id:ID!
   }
 
   type Book {
     title: String!
     published: Int!
-    author: String!
-    id: ID!
+    author: Author!
     genres: [String!]!
+    id:ID!
   }
 
   type Query{
@@ -116,6 +44,11 @@ const typeDefs = `
         genres: [String!]!
     ):Book
 
+    addAuthor(
+      name: String!
+      born: Int
+    ):Author!
+
     editAuthor(
         name:String!, 
         setBornTo:Int!
@@ -125,11 +58,12 @@ const typeDefs = `
 
 const resolvers = {
   Query: {
-    bookCount: () => books.length,
-    authorCount: () => authors.length,
-    allBooks: (root, args) => {
+    bookCount: async () => Book.collection.countDocuments(),
+    authorCount: async () => Author.collection.countDocuments(),
+
+    allBooks: async (root, args) => {
       if (!args.author && !args.genere) {
-        return books;
+        return Book.find({});
       }
       let authorBooks;
       if (args.author && args.genre) {
@@ -142,26 +76,43 @@ const resolvers = {
       }
       return authorBooks;
     },
-    allAuthors: () => authors,
-  },
-  Author: {
-    bookCount: (root) => {
-      const authorBooks = books.filter((b) => b.author === root.name);
-      return authorBooks.length;
-    },
+    allAuthors: async () => Author.find({}),
   },
 
   Mutation: {
-    addBook: (root, args) => {
-      const authorNames = authors.map((a) => a.name);
-      if (!authorNames.includes(args.author)) {
-        const newAuthor = { name: args.author, id: uuid.v1() };
-        authors = authors.concat(newAuthor);
+    addBook: async (root, args) => {
+      let author = await Author.findOne({ name: args.name });
+      if (!author) {
+        author = new Author({ name: args.author });
+        await author.save();
       }
-      const newBook = { ...args, id: uuid.v1() };
-      books = books.concat(newBook);
-      return newBook;
+
+      console.log(author);
+      try {
+        const newBook = new Book({
+          title: args.title,
+          published: args.published,
+          genres: args.genres,
+          author: author._id,
+        });
+        return newBook.save();
+      } catch (error) {
+        console.log(error);
+
+        throw new GraphQLError('Saving user failed', {
+          extensions: {
+            code: 'BAD_USER_INPUT',
+            invalidArgs: args.name,
+            error,
+          },
+        });
+      }
     },
+    addAuthor: async (root, args) => {
+      const author = new Author({ ...args });
+      return author.save();
+    },
+
     editAuthor: (root, args) => {
       const author = authors.find((a) => a.name === args.name);
       console.log(author, args);
