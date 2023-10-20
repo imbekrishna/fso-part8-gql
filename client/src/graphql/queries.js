@@ -61,3 +61,25 @@ export const LOGIN = gql`
     }
   }
 `;
+
+export const RECOMMENDED = gql`
+  query Recommended {
+    recommended {
+      title
+      published
+      author {
+        name
+      }
+      genres
+    }
+  }
+`;
+
+export const CURRENT_USER = gql`
+  query Me {
+    me {
+      username
+      favoriteGenre
+    }
+  }
+`;
