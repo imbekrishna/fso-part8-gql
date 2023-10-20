@@ -4,7 +4,6 @@ import {
   ADD_BOOK,
   ALL_BOOKS,
   ALL_GENRES,
-  RECOMMENDED,
 } from '../graphql/queries';
 import updateCache from '../helpers/updateCache';
 
@@ -25,13 +24,6 @@ const NewBook = ({ show, setPage }) => {
         cache,
         { query: ALL_BOOKS },
         'allBooks',
-        response.data.addBook
-      );
-
-      updateCache(
-        cache,
-        { query: RECOMMENDED },
-        'recommended',
         response.data.addBook
       );
 

@@ -6,7 +6,7 @@ import NewBook from './components/NewBook';
 import LoginForm from './components/LoginForm';
 import Recommendations from './components/Recommendations';
 import { useSubscription } from '@apollo/client';
-import { ALL_BOOKS, BOOK_ADDED } from './graphql/queries';
+import { ALL_BOOKS, BOOK_ADDED, RECOMMENDED } from './graphql/queries';
 import updateCache from './helpers/updateCache';
 
 const App = () => {
@@ -24,6 +24,12 @@ const App = () => {
         client.cache,
         { query: ALL_BOOKS },
         'allBooks',
+        data.data.bookAdded
+      );
+      updateCache(
+        client.cache,
+        { query: RECOMMENDED },
+        'recommended',
         data.data.bookAdded
       );
     },

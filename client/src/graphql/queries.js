@@ -16,6 +16,7 @@ export const ALL_AUTHORS = gql`
     allAuthors {
       born
       name
+      bookCount
     }
   }
 `;
