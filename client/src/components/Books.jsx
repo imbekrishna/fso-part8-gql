@@ -1,45 +1,49 @@
 import { useQuery } from '@apollo/client';
-import { ALL_BOOKS } from '../graphql/queries';
-import { useEffect, useState } from 'react';
+import { ALL_BOOKS, ALL_GENRES } from '../graphql/queries';
 import BookTable from './BookTable';
 
 const Books = (props) => {
-  const [allBooks, setAllBooks] = useState(null);
-  const result = useQuery(ALL_BOOKS);
+  const { data, refetch, loading } = useQuery(ALL_BOOKS, {
+    variables: {
+      author: undefined,
+      genre: undefined,
+    },
+  });
 
-  useEffect(() => {
-    if (result.data) {
-      setAllBooks(result.data.allBooks);
-    }
-  }, [result.data]);
+  const genres = useQuery(ALL_GENRES);
 
   if (!props.show) {
     return null;
   }
 
-  if (result.loading) {
+  if (loading) {
     return <div>loading...</div>;
   }
 
-  const genres = result.data.allBooks.map((book) => book.genres);
-  const genreArray = [...new Set(genres.reduce((a, b) => a.concat(b), []))];
-
   const filterBooks = (event) => {
-    const category = event.target.value;
-    const categoryBooks = result.data.allBooks.filter((book) => {
-      return book.genres.includes(category);
+    const genre = event.target.value;
+    refetch({
+      author: undefined,
+      genre: genre,
     });
-
-    setAllBooks(categoryBooks);
   };
 
   return (
     <div>
       <h2>Books</h2>
-      <BookTable books={allBooks}/>
+      <BookTable books={data.allBooks} />
       <div>
-        <button onClick={() => setAllBooks(result.data.allBooks)}>all</button>
-        {genreArray.map((genre) => (
+        <button
+          onClick={() =>
+            refetch({
+              author: undefined,
+              genre: undefined,
+            })
+          }
+        >
+          all
+        </button>
+        {genres.data.allGenres.map((genre) => (
           <button key={genre} name="genre" value={genre} onClick={filterBooks}>
             {genre}
           </button>

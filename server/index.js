@@ -47,6 +47,7 @@ const typeDefs = `
     allAuthors: [Author!]!
     me: User
     recommended: [Book!]
+    allGenres: [String!]!
   }
 
   type Mutation {
@@ -117,6 +118,26 @@ const resolvers = {
       return Book.find({
         genres: { $elemMatch: { $eq: currentUser.favoriteGenre } },
       }).populate('author');
+    },
+    allGenres: async (root, args) => {
+      const [data] = await Book.aggregate([
+        {
+          $unwind: '$genres',
+        },
+        {
+          $group: {
+            _id: null,
+            genres: { $addToSet: '$genres' },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            genres: 1,
+          },
+        },
+      ]);
+      return data.genres.sort();
     },
   },
 

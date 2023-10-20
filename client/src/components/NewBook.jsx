@@ -1,6 +1,11 @@
 import { useMutation } from '@apollo/client';
 import { useState } from 'react';
-import { ADD_BOOK, ALL_BOOKS } from '../graphql/queries';
+import {
+  ADD_BOOK,
+  ALL_BOOKS,
+  ALL_GENRES,
+  RECOMMENDED,
+} from '../graphql/queries';
 
 const NewBook = ({ show, setPage }) => {
   const [title, setTitle] = useState('');
@@ -18,6 +23,20 @@ const NewBook = ({ show, setPage }) => {
       cache.updateQuery({ query: ALL_BOOKS }, ({ allBooks }) => {
         return {
           allBooks: allBooks.concat(response.data.addBook),
+        };
+      });
+
+      cache.updateQuery({ query: RECOMMENDED }, ({ recommended }) => {
+        return {
+          recommended: recommended.concat(response.data.addBook),
+        };
+      });
+
+      cache.updateQuery({ query: ALL_GENRES }, ({ allGenres }) => {
+        return {
+          allGenres: [
+            ...new Set([...allGenres, ...response.data.addBook.genres]),
+          ],
         };
       });
     },
