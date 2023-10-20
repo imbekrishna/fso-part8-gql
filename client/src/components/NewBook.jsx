@@ -21,13 +21,19 @@ const NewBook = ({ show, setPage }) => {
     },
 
     update: (cache, response) => {
-      updateCache(cache, { query: ALL_BOOKS }, response.data.addBook);
+      updateCache(
+        cache,
+        { query: ALL_BOOKS },
+        'allBooks',
+        response.data.addBook
+      );
 
-      cache.updateQuery({ query: RECOMMENDED }, ({ recommended }) => {
-        return {
-          recommended: recommended.concat(response.data.addBook),
-        };
-      });
+      updateCache(
+        cache,
+        { query: RECOMMENDED },
+        'recommended',
+        response.data.addBook
+      );
 
       cache.updateQuery({ query: ALL_GENRES }, ({ allGenres }) => {
         return {

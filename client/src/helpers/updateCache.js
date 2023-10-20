@@ -1,4 +1,4 @@
-export const updateCache = (cache, query, addedBook) => {
+export const updateCache = (cache, query, collection, object) => {
   // helper that is used to eliminate saving same person twice
   const uniqByName = (a) => {
     let seen = new Set();
@@ -8,9 +8,10 @@ export const updateCache = (cache, query, addedBook) => {
     });
   };
 
-  cache.updateQuery(query, ({ allBooks }) => {
+  cache.updateQuery(query, (data) => {
+    const collections = data[collection];
     return {
-      allBooks: uniqByName(allBooks.concat(addedBook)),
+      [collection]: uniqByName(collections.concat(object)),
     };
   });
 };

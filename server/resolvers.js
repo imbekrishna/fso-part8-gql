@@ -8,6 +8,12 @@ const User = require('./models/user');
 const pubsub = new PubSub();
 
 const resolvers = {
+  Author: {
+    bookCount: async (root) => {
+      return root.books.length;
+    },
+  },
+
   Query: {
     bookCount: async () => Book.collection.countDocuments(),
     authorCount: async () => Author.collection.countDocuments(),
@@ -31,7 +37,7 @@ const resolvers = {
         genres: { $elemMatch: { $eq: args.genre } },
       }).populate('author');
     },
-    allAuthors: async () => Author.find({}),
+    allAuthors: async () => Author.find({}).populate('books'),
     me: (root, args, context) => context.currentUser,
     recommended: async (root, args, { currentUser }) => {
       if (!currentUser) {
@@ -92,7 +98,10 @@ const resolvers = {
           genres: args.genres,
           author: author._id,
         });
+
         await newBook.save();
+        author.books = author.books.concat(newBook._id);
+        await author.save();
 
         const book = await Book.populate(newBook, 'author');
 

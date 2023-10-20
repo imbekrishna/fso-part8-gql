@@ -43,17 +43,11 @@ const Books = (props) => {
         >
           all
         </button>
-        {genres.data.allGenres &&
-          genres.data.allGenres.map((genre) => (
-            <button
-              key={genre}
-              name="genre"
-              value={genre}
-              onClick={filterBooks}
-            >
-              {genre}
-            </button>
-          ))}
+        {genres.data.allGenres.map((genre) => (
+          <button key={genre} name="genre" value={genre} onClick={filterBooks}>
+            {genre}
+          </button>
+        ))}
       </div>
     </div>
   );

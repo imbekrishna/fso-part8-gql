@@ -20,7 +20,12 @@ const App = () => {
 
   useSubscription(BOOK_ADDED, {
     onData: ({ data, client }) => {
-      updateCache(client.cache, { query: ALL_BOOKS }, data.data.bookAdded);
+      updateCache(
+        client.cache,
+        { query: ALL_BOOKS },
+        'allBooks',
+        data.data.bookAdded
+      );
     },
   });
 
