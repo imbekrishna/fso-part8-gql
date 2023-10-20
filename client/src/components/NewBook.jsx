@@ -6,6 +6,7 @@ import {
   ALL_GENRES,
   RECOMMENDED,
 } from '../graphql/queries';
+import updateCache from '../helpers/updateCache';
 
 const NewBook = ({ show, setPage }) => {
   const [title, setTitle] = useState('');
@@ -20,11 +21,7 @@ const NewBook = ({ show, setPage }) => {
     },
 
     update: (cache, response) => {
-      cache.updateQuery({ query: ALL_BOOKS }, ({ allBooks }) => {
-        return {
-          allBooks: allBooks.concat(response.data.addBook),
-        };
-      });
+      updateCache(cache, { query: ALL_BOOKS }, response.data.addBook);
 
       cache.updateQuery({ query: RECOMMENDED }, ({ recommended }) => {
         return {
@@ -48,13 +45,6 @@ const NewBook = ({ show, setPage }) => {
 
   const submit = async (event) => {
     event.preventDefault();
-
-    console.log({
-      title,
-      author,
-      genres,
-      published: Number(published),
-    });
 
     addBook({
       variables: {
