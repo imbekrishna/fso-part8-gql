@@ -17,6 +17,7 @@ export const ALL_BOOKS = gql`
         name
       }
       published
+      genres
     }
   }
 `;
@@ -39,6 +40,7 @@ export const ADD_BOOK = gql`
         name
       }
       published
+      genres
     }
   }
 `;
