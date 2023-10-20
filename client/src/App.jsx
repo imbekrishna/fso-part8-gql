@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import './App.css';
 import Authors from './components/Authors';
 import Books from './components/Books';
@@ -8,6 +8,11 @@ import LoginForm from './components/LoginForm';
 const App = () => {
   const [page, setPage] = useState('authors');
   const [token, setToken] = useState(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('library-user');
+    setToken(token);
+  }, []);
 
   const logout = () => {
     setToken(null);
@@ -19,9 +24,11 @@ const App = () => {
       <div>
         <button onClick={() => setPage('authors')}>Authors</button>
         <button onClick={() => setPage('books')}>Books</button>
-        <button onClick={() => setPage('add')}>Add book</button>
         {token ? (
-          <button onClick={logout}>Logout</button>
+          <>
+            <button onClick={() => setPage('add')}>Add book</button>
+            <button onClick={logout}>Logout</button>
+          </>
         ) : (
           <button onClick={() => setPage('login')}>Login</button>
         )}
@@ -31,7 +38,7 @@ const App = () => {
 
       <Books show={page === 'books'} />
 
-      <NewBook show={page === 'add'} />
+      <NewBook show={page === 'add'} setPage={setPage} />
 
       <LoginForm
         show={page === 'login'}
